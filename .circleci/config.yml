@@ -1,16 +1,46 @@
 version: 2.1
-orbs:
-  ruby: circleci/ruby@0.1.2 
+
+test_job: &test_job
+  steps:
+    - checkout
+    - setup_remote_docker:
+        version: 18.06.0-ce
+        docker_layer_caching: true
+    - run:
+        name: Build image
+        command: |
+          docker-compose -f $COMPOSE_YAML build --parallel
+    - run:
+        name: Launch the database
+        command: |
+          docker-compose -f $COMPOSE_YAML up -d mysql
+    - run:
+        name: Run Rubocop
+        command: |
+          docker-compose -f $COMPOSE_YAML run --rm app bundle exec rubocop -c .rubocop.yml --parallel
+    - run:
+        name: Wait db
+        command: |
+          docker-compose -f $COMPOSE_YAML run dockerize dockerize -wait tcp://mysql:3306 -timeout 1m
+    - run:
+        name: Setup database
+        command: |
+          docker-compose -f $COMPOSE_YAML run --rm -e RAILS_ENV=test app bundle exec rails db:create db:migrate
+    - run:
+        name: RSpec
+        command: |
+          docker-compose -f $COMPOSE_YAML run --rm app bundle exec rspec
 
 jobs:
-  build:
+  test:
     docker:
-      - image: circleci/ruby:2.6.3-stretch-node
-    executor: ruby/default
-    steps:
-      - checkout
-      - run:
-          name: Which bundler?
-          command: bundle -v
-      - ruby/bundle-install
+      - image: docker/compose:1.27.4
+        environment:
+          COMPOSE_YAML: docker-compose.yml
+    <<: *test_job
 
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
