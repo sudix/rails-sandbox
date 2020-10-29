@@ -15,10 +15,6 @@ test_job: &test_job
         command: |
           docker-compose -f $COMPOSE_YAML up -d mysql
     - run:
-        name: Run Rubocop
-        command: |
-          docker-compose -f $COMPOSE_YAML run --rm app bundle exec rubocop -c .rubocop.yml --parallel
-    - run:
         name: Wait db
         command: |
           docker-compose -f $COMPOSE_YAML run dockerize dockerize -wait tcp://mysql:3306 -timeout 1m
