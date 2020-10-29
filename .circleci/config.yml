@@ -36,7 +36,7 @@ jobs:
     docker:
       - image: docker/compose:1.27.4
         environment:
-          COMPOSE_YAML: docker-compose.yml
+          COMPOSE_YAML: docker/docker-compose-test.yaml
     <<: *test_job
 
 workflows:
