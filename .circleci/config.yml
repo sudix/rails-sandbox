@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  slack: circleci/slack@3.4.2
+
 test_job: &test_job
   steps:
     - checkout
@@ -26,6 +29,7 @@ test_job: &test_job
         name: RSpec
         command: |
           docker-compose -f $COMPOSE_YAML run --rm app bundle exec rspec
+    - slack/status
 
 jobs:
   test:
