@@ -53,9 +53,9 @@ workflows:
          aws-access-key-id: AWS_ACCESS_KEY_ID
          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
          checkout: true
-         dockerfile: "Dockerfile.production"
+         dockerfile: "/docker/app/Dockerfile.production"
          no-output-timeout: 20m
-         path: "./docker/app"
+         path: "."
          region: AWS_REGION
          repo: "rails-sandbox-app-staging"
          skip-when-tags-exist: true
