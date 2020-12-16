@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   slack: circleci/slack@3.4.2
+  aws-ecr: circleci/aws-ecr@6.15.1
 
 test_job: &test_job
   steps:
@@ -45,3 +46,17 @@ workflows:
   test:
     jobs:
       - test
+  staging-build_and_push_image:
+    jobs:
+      - aws-ecr/build-and-push-image:
+         account-url: AWS_ECR_ACCOUNT_URL
+         aws-access-key-id: AWS_ACCESS_KEY_ID
+         aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+         checkout: true
+         dockerfile: "Dockerfile.production"
+         no-output-timeout: 20m
+         path: "./docker/app"
+         region: AWS_REGION
+         repo: "rails-sandbox-app-staging"
+         skip-when-tags-exist: true
+         tag: "${CIRCLE_SHA1}"
