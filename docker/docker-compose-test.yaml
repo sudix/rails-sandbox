@@ -1,0 +1,29 @@
+version: "3.7"
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: docker/app/Dockerfile.test
+    env_file:
+      ../app.env
+    environment:
+      RAILS_ENV: test
+    depends_on:
+      - mysql
+    tty: true
+    stdin_open: true
+
+  mysql:
+    build:
+      context: ../
+      dockerfile: docker/mysql/Dockerfile
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    command: mysqld
+
+  dockerize:
+    build:
+      context: ../
+      dockerfile: docker/dockerize/Dockerfile
+    depends_on:
+      - mysql
