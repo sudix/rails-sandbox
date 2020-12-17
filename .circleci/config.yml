@@ -40,15 +40,8 @@ jobs:
         environment:
           COMPOSE_YAML: docker/docker-compose-test.yaml
     <<: *test_job
-
-workflows:
-  version: 2
-  test:
-    jobs:
-      - test
-  staging-build_and_push_image:
-    jobs:
-      - aws-ecr/build-and-push-image:
+  deploy-staging:
+     - aws-ecr/build-and-push-image:
          account-url: AWS_ECR_ACCOUNT_URL
          aws-access-key-id: AWS_ACCESS_KEY_ID
          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
@@ -61,3 +54,27 @@ workflows:
          repo: "rails-sandbox-app-staging"
          skip-when-tags-exist: true
          tag: "${CIRCLE_SHA1}"
+
+
+workflows:
+  version: 2
+  test:
+    jobs:
+     - test:
+         filters:
+           branches:
+             ignore:
+               - push-image
+  staging-deploy:
+    jobs:
+    - test:
+        filters:
+          branches:
+            only: push-image
+    - deploy-staging:
+        deploy-staging:
+          requires:
+            - test
+          filters:
+            branches:
+              only: push-image
