@@ -3,6 +3,9 @@ RUN apt-get update -qq \
   && apt-get install -y build-essential nodejs locales apt-utils graphviz vim \
   && rm -rf /var/lib/apt/lists/*
 
+ARG RAILS_ENV
+ARG RAILS_MASTER_KEY
+
 WORKDIR /app
 COPY Gemfile /app/Gemfile
 COPY Gemfile.lock /app/Gemfile.lock
@@ -18,5 +21,4 @@ RUN localedef -f UTF-8 -i en_US en_US.utf8
 
 ADD . /app
 
-RUN bundle exec rake assets:precompile RAILS_ENV=production
-RUN rm /app/config/master.key
+RUN bundle exec rake assets:precompile

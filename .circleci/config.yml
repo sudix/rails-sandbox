@@ -54,6 +54,7 @@ workflows:
          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
          checkout: true
          dockerfile: "/docker/app/Dockerfile.production"
+         extra-build-args: "--build-arg RAILS_ENV=staging --build-arg RAILS_MASTER_KEY=${RAILS_MASTER_KEY_STAGING}"
          no-output-timeout: 20m
          path: "."
          region: AWS_REGION
