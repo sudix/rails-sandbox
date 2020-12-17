@@ -1,6 +1,6 @@
 FROM ruby:2.7.1
 RUN apt-get update -qq \
-  && apt-get install -y build-essential nodejs locales apt-utils graphviz vim \
+  && apt-get install -y build-essential nodejs locales apt-utils graphviz vim yarn \
   && rm -rf /var/lib/apt/lists/*
 
 ARG RAILS_ENV
