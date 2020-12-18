@@ -88,12 +88,12 @@ workflows:
                - push-image
   deploy-staging:
     jobs:
-      # - job-test:
-      #    name: test
-      #    filters:
-      #      branches:
-      #        only:
-      #          - push-image
+      - job-test:
+         name: test
+         filters:
+           branches:
+             only:
+               - push-image
       - aws-ecr/build-and-push-image:
           account-url: AWS_ECR_ACCOUNT_URL
           aws-access-key-id: AWS_ACCESS_KEY_ID
@@ -107,10 +107,13 @@ workflows:
           repo: "rails-sandbox-app-staging"
           skip-when-tags-exist: true
           tag: "${CIRCLE_SHA1}"
+          requires:
+            - test
           filters:
             branches:
               only:
                 - push-image
+
 
 
   #   jobs:
