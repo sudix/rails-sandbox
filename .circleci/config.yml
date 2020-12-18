@@ -10,6 +10,9 @@ executors:
       - image: docker/compose:1.27.4
         environment:
           COMPOSE_YAML: docker/docker-compose-test.yaml
+  deploy-executor:
+    docker:
+      - image: docker/ubuntu-1604:201903-01
 
 commands:
   command-test:
@@ -63,6 +66,8 @@ jobs:
     steps:
       - command-test
   job-deploy:
+    executor:
+      name: deploy-executor
     steps:
       - command-deploy
   #   <<: *test_job
