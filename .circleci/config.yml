@@ -12,7 +12,7 @@ executors:
           COMPOSE_YAML: docker/docker-compose-test.yaml
 
 commands:
-  test:
+  test-command:
     steps:
       - run: apk add bash curl
       - checkout
@@ -55,11 +55,11 @@ commands:
     #     tag: "${CIRCLE_SHA1}"
 
 jobs:
-  test:
+  test-job:
     executor:
       name: test-executor
     steps:
-      - test
+      - test-command
   #   <<: *test_job
   # deploy-staging:
   #   executor:
@@ -68,10 +68,12 @@ jobs:
 
 
 workflows:
-  version: 2
   test:
     jobs:
-     - test:
+      - test-job:
+         name: test
+    # jobs:
+    #  - test-job:
          # filters:
          #   branches:
          #     ignore:
