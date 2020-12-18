@@ -4,56 +4,67 @@ orbs:
   slack: circleci/slack@3.4.2
   aws-ecr: circleci/aws-ecr@6.15.1
 
-test_job: &test_job
-  steps:
-    - run: apk add bash curl
-    - checkout
-    - setup_remote_docker:
-        version: 18.06.0-ce
-        docker_layer_caching: false
-    - run:
-        name: Build image
-        command: |
-          docker-compose -f $COMPOSE_YAML build --parallel
-    - run:
-        name: Launch the database
-        command: |
-          docker-compose -f $COMPOSE_YAML up -d mysql
-    - run:
-        name: Wait db
-        command: |
-          docker-compose -f $COMPOSE_YAML run dockerize dockerize -wait tcp://mysql:3306 -timeout 1m
-    - run:
-        name: Setup database
-        command: |
-          docker-compose -f $COMPOSE_YAML run --rm -e RAILS_ENV=test app bundle exec rails db:create db:migrate
-    - run:
-        name: RSpec
-        command: |
-          docker-compose -f $COMPOSE_YAML run --rm app bundle exec rspec
-    - slack/status
-
-jobs:
-  test:
+executors:
+  test-executor:
     docker:
       - image: docker/compose:1.27.4
         environment:
           COMPOSE_YAML: docker/docker-compose-test.yaml
-    <<: *test_job
-  deploy-staging:
-     - aws-ecr/build-and-push-image:
-         account-url: AWS_ECR_ACCOUNT_URL
-         aws-access-key-id: AWS_ACCESS_KEY_ID
-         aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-         checkout: true
-         dockerfile: "/docker/app/Dockerfile.production"
-         extra-build-args: "--build-arg RAILS_ENV=staging --build-arg RAILS_MASTER_KEY=${RAILS_MASTER_KEY_STAGING}"
-         no-output-timeout: 20m
-         path: "."
-         region: AWS_REGION
-         repo: "rails-sandbox-app-staging"
-         skip-when-tags-exist: true
-         tag: "${CIRCLE_SHA1}"
+
+commands:
+  test:
+    steps:
+      - run: apk add bash curl
+      - checkout
+      - setup_remote_docker:
+          version: 18.06.0-ce
+          docker_layer_caching: false
+      - run:
+          name: Build image
+          command: |
+            docker-compose -f $COMPOSE_YAML build --parallel
+      - run:
+          name: Launch the database
+          command: |
+            docker-compose -f $COMPOSE_YAML up -d mysql
+      - run:
+          name: Wait db
+          command: |
+            docker-compose -f $COMPOSE_YAML run dockerize dockerize -wait tcp://mysql:3306 -timeout 1m
+      - run:
+          name: Setup database
+          command: |
+            docker-compose -f $COMPOSE_YAML run --rm -e RAILS_ENV=test app bundle exec rails db:create db:migrate
+      - run:
+          name: RSpec
+          command: |
+            docker-compose -f $COMPOSE_YAML run --rm app bundle exec rspec
+      - slack/status
+    # - aws-ecr/build-and-push-image:
+    #     account-url: AWS_ECR_ACCOUNT_URL
+    #     aws-access-key-id: AWS_ACCESS_KEY_ID
+    #     aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+    #     checkout: true
+    #     dockerfile: "/docker/app/Dockerfile.production"
+    #     extra-build-args: "--build-arg RAILS_ENV=staging --build-arg RAILS_MASTER_KEY=${RAILS_MASTER_KEY_STAGING}"
+    #     no-output-timeout: 20m
+    #     path: "."
+    #     region: AWS_REGION
+    #     repo: "rails-sandbox-app-staging"
+    #     skip-when-tags-exist: true
+    #     tag: "${CIRCLE_SHA1}"
+
+jobs:
+  test:
+    executor:
+      name: test-executor
+    steps:
+      - test
+  #   <<: *test_job
+  # deploy-staging:
+  #   executor:
+  #     name: test-executor
+  #   <<: *test_job
 
 
 workflows:
@@ -65,16 +76,15 @@ workflows:
            branches:
              ignore:
                - push-image
-  staging-deploy:
-    jobs:
-    - test:
-        filters:
-          branches:
-            only: push-image
-    - deploy-staging:
-        deploy-staging:
-          requires:
-            - test
-          filters:
-            branches:
-              only: push-image
+  # staging-deploy:
+  #   jobs:
+  #   - test:
+  #       filters:
+  #         branches:
+  #           only: push-image
+  #   - deploy-staging:
+  #       requires:
+  #         - test
+  #       filters:
+  #         branches:
+  #           only: push-image
