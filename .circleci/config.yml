@@ -72,10 +72,10 @@ workflows:
   test:
     jobs:
      - test:
-         filters:
-           branches:
-             ignore:
-               - push-image
+         # filters:
+         #   branches:
+         #     ignore:
+         #       - push-image
   # staging-deploy:
   #   jobs:
   #   - test:
