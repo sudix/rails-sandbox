@@ -12,7 +12,7 @@ executors:
           COMPOSE_YAML: docker/docker-compose-test.yaml
 
 commands:
-  test-command:
+  command-test:
     steps:
       - run: apk add bash curl
       - checkout
@@ -40,26 +40,34 @@ commands:
           command: |
             docker-compose -f $COMPOSE_YAML run --rm app bundle exec rspec
       - slack/status
-    # - aws-ecr/build-and-push-image:
-    #     account-url: AWS_ECR_ACCOUNT_URL
-    #     aws-access-key-id: AWS_ACCESS_KEY_ID
-    #     aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-    #     checkout: true
-    #     dockerfile: "/docker/app/Dockerfile.production"
-    #     extra-build-args: "--build-arg RAILS_ENV=staging --build-arg RAILS_MASTER_KEY=${RAILS_MASTER_KEY_STAGING}"
-    #     no-output-timeout: 20m
-    #     path: "."
-    #     region: AWS_REGION
-    #     repo: "rails-sandbox-app-staging"
-    #     skip-when-tags-exist: true
-    #     tag: "${CIRCLE_SHA1}"
+  command-deploy:
+    steps:
+      - aws-ecr/build-and-push-image:
+          account-url: AWS_ECR_ACCOUNT_URL
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          checkout: true
+          dockerfile: "/docker/app/Dockerfile.production"
+          extra-build-args: "--build-arg RAILS_ENV=staging --build-arg RAILS_MASTER_KEY=${RAILS_MASTER_KEY_STAGING}"
+          no-output-timeout: 20m
+          path: "."
+          region: AWS_REGION
+          repo: "rails-sandbox-app-staging"
+          skip-when-tags-exist: true
+          tag: "${CIRCLE_SHA1}"
 
 jobs:
-  test-job:
+  job-test:
     executor:
       name: test-executor
     steps:
-      - test-command
+      - command-test
+  job-deploy:
+    executor:
+      name: test-executor
+    steps:
+      - command-test
+      - command-deploy
   #   <<: *test_job
   # deploy-staging:
   #   executor:
@@ -70,15 +78,29 @@ jobs:
 workflows:
   test:
     jobs:
-      - test-job:
+      - job-test:
          name: test
-    # jobs:
-    #  - test-job:
-         # filters:
-         #   branches:
-         #     ignore:
-         #       - push-image
-  # staging-deploy:
+         filters:
+           branches:
+             ignore:
+               - push-image
+  deploy-staging:
+    jobs:
+      - job-test:
+         name: test
+         filters:
+           branches:
+             only:
+               - push-image
+      - job-deploy:
+          name: deploy
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - push-image
+
   #   jobs:
   #   - test:
   #       filters:
