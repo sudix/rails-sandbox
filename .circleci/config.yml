@@ -63,8 +63,6 @@ jobs:
     steps:
       - command-test
   job-deploy:
-    executor:
-      name: test-executor
     steps:
       - command-deploy
   #   <<: *test_job
@@ -99,6 +97,7 @@ workflows:
             branches:
               only:
                 - push-image
+
 
   #   jobs:
   #   - test:
