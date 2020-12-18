@@ -94,10 +94,19 @@ workflows:
       #      branches:
       #        only:
       #          - push-image
-      - job-deploy:
-          name: deploy
-          # requires:
-          #   - test
+      - aws-ecr/build-and-push-image:
+          account-url: AWS_ECR_ACCOUNT_URL
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          checkout: true
+          dockerfile: "/docker/app/Dockerfile.production"
+          extra-build-args: "--build-arg RAILS_ENV=staging --build-arg RAILS_MASTER_KEY=${RAILS_MASTER_KEY_STAGING}"
+          no-output-timeout: 20m
+          path: "."
+          region: AWS_REGION
+          repo: "rails-sandbox-app-staging"
+          skip-when-tags-exist: true
+          tag: "${CIRCLE_SHA1}"
           filters:
             branches:
               only:
